@@ -1,0 +1,21 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
+
+# Log files
+*.log
+npm-debug.log*
+
+# Optional: 投稿済みフラグファイルをgitで管理しない場合
+# *.published

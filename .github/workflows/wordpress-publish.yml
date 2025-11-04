@@ -1,0 +1,61 @@
+name: WordPress 自動投稿
+
+on:
+  # 毎日午前9時（日本時間）に実行 - UTCでは午前0時
+  schedule:
+    - cron: '0 0 * * *'  # 毎日 UTC 0:00 (JST 9:00)
+
+  # 手動実行も可能
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 全履歴を取得
+
+      - name: Node.js セットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 未投稿の記事を検索
+        id: find-post
+        run: |
+          # posts/ディレクトリから.mdファイルで、まだ.publishedフラグがないものを検索
+          unpublished_posts=$(find posts -name "*.md" -type f | while read -r post; do
+            if [ ! -f "${post}.published" ]; then
+              echo "$post"
+            fi
+          done | sort | head -n 1)
+
+          if [ -z "$unpublished_posts" ]; then
+            echo "未投稿の記事が見つかりませんでした"
+            echo "post_found=false" >> $GITHUB_OUTPUT
+          else
+            echo "投稿する記事: $unpublished_posts"
+            echo "post_found=true" >> $GITHUB_OUTPUT
+            echo "post_path=$unpublished_posts" >> $GITHUB_OUTPUT
+          fi
+
+      - name: WordPressに投稿
+        if: steps.find-post.outputs.post_found == 'true'
+        env:
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+        run: |
+          node scripts/publish-to-wordpress.js "${{ steps.find-post.outputs.post_path }}"
+
+      - name: 投稿済みフラグをコミット
+        if: steps.find-post.outputs.post_found == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add "${{ steps.find-post.outputs.post_path }}.published"
+          git commit -m "📝 投稿完了: ${{ steps.find-post.outputs.post_path }}"
+          git push

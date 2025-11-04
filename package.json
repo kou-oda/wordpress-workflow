@@ -1,0 +1,19 @@
+{
+  "name": "gadget-blog-automation",
+  "version": "1.0.0",
+  "description": "PC周辺機器ブログの自動投稿システム",
+  "main": "scripts/publish-to-wordpress.js",
+  "scripts": {
+    "publish": "node scripts/publish-to-wordpress.js"
+  },
+  "keywords": [
+    "wordpress",
+    "automation",
+    "blog"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
